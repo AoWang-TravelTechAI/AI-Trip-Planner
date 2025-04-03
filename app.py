@@ -1,24 +1,76 @@
-from flask import Flask, render_template, request, jsonify
+import openai
+import googlemaps
+import os
+from flask import Flask, request, render_template
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
+
+# Retrieve API keys from environment variables
+openai.api_key = os.getenv("OPENAI_API_KEY")
+gmaps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_API_KEY"))
 
 app = Flask(__name__)
 
-# Home route to render the frontend
-@app.route('/')
-def index():
-    return render_template('index.html')
+def generate_itinerary(destination, days):
+    """
+    Generate a travel itinerary using OpenAI's GPT model.
+    
+    Parameters:
+        destination (str): The travel destination.
+        days (int): Number of days for the itinerary.
+    
+    Returns:
+        str: The generated itinerary.
+    """
+    prompt = f"Please create a {days}-day itinerary for {destination}, including sightseeing, food, and activity suggestions for each day."
 
-# API endpoint to generate a simple travel itinerary
-@app.route('/plan_trip', methods=['POST'])
-def plan_trip():
-    data = request.json
-    destination = data.get('destination', 'Unknown location')
-    days = int(data.get('days', 3))  # Default to 3 days
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a professional travel planner."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    return response["choices"][0]["message"]["content"]
 
-    itinerary = []
-    for i in range(1, days + 1):
-        itinerary.append(f"Day {i}: Explore top attractions in {destination}")
+def get_real_time_attractions(destination):
+    """
+    Fetch real-time top attractions using Google Maps API.
+    
+    Parameters:
+        destination (str): The travel destination.
+    
+    Returns:
+        list: A list of top attractions.
+    """
+    places_result = gmaps.places(query=f"top attractions in {destination}")
+    attractions = [place["name"] for place in places_result.get("results", [])[:5]]
+    return attractions
 
-    return jsonify({"destination": destination, "itinerary": itinerary})
+@app.route("/", methods=["GET", "POST"])
+def home():
+    """
+    Handle the main webpage for travel itinerary generation.
+    
+    If the user submits a destination and days, it generates an itinerary
+    and fetches top attractions.
+    
+    Returns:
+        str: Rendered HTML template with itinerary and attractions.
+    """
+    itinerary = ""
+    attractions = []
+    if request.method == "POST":
+        destination = request.form["destination"]
+        days = request.form["days"]
+        itinerary = generate_itinerary(destination, days)
+        attractions = get_real_time_attractions(destination)
 
-if __name__ == '__main__':
+    return render_template("index.html", itinerary=itinerary, attractions=attractions)
+
+if __name__ == "__main__":
+    # Run the Flask application in debug mode
     app.run(debug=True)

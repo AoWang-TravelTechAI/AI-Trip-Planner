@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 # Load API keys from .env file
 load_dotenv()
+print("OpenAI Key:", os.getenv("OPENAI_API_KEY"))
 openai.api_key = os.getenv("OPENAI_API_KEY")
 gmaps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_API_KEY"))
 

@@ -13,17 +13,20 @@ gmaps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_API_KEY"))
 app = Flask(__name__)
 
 def generate_itinerary(destination, days):
-    prompt = f"Create a {days}-day travel itinerary for {destination}. Include sightseeing, food, and activities for each day."
-    
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a professional travel planner."},
-            {"role": "user", "content": prompt}
-        ]
-    )
+    prompt = f"Please create a {days}-day itinerary for {destination}, including sightseeing, food, and activity suggestions for each day."
 
-    return response["choices"][0]["message"]["content"]
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a professional travel planner."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response["choices"][0]["message"]["content"]
+    except Exception as e:
+        print("Error in generate_itinerary:", e)
+        return "Error generating itinerary."
 
 def get_real_time_attractions(destination):
     result = gmaps.places(query=f"top attractions in {destination}")

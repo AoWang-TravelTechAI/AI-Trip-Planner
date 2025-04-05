@@ -71,6 +71,18 @@ def home():
 
     return render_template("index.html", itinerary=itinerary, attractions=attractions)
 
+from flask import jsonify  # 确保这一行在顶部导入了
+
+@app.route("/plan_trip", methods=["POST"])
+def plan_trip():
+    data = request.get_json()
+    destination = data.get("destination")
+    days = int(data.get("days"))
+
+    itinerary_text = generate_itinerary(destination, days)
+    itinerary_list = itinerary_text.strip().split("\n")  # 分成每日行程
+    return jsonify({"destination": destination, "itinerary": itinerary_list})
+
 if __name__ == "__main__":
     # Run the Flask application in debug mode
     app.run(debug=True)

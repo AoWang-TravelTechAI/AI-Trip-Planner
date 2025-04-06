@@ -8,18 +8,22 @@
         async function planTrip() {
             const destination = document.getElementById('destination').value;
             const days = document.getElementById('days').value;
-            
-            const response = await fetch('/plan_trip', {
+
+            const response = await fetch('http://127.0.0.1:5000/plan_trip', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ destination, days })
             });
-            const data = await response.json();
 
-            document.getElementById('result').innerHTML = 
-                `<h3>Destination: ${data.destination}</h3><ul>` +
-                data.itinerary.map(day => `<li>${day}</li>`).join('') +
-                `</ul>`;
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('result').innerHTML = 
+                    `<h3>Destination: ${data.destination}</h3><ul>` +
+                    data.itinerary.map(day => `<li>${day}</li>`).join('') +
+                    `</ul>`;
+            } else {
+                document.getElementById('result').innerHTML = `<p>Error generating itinerary.</p>`;
+            }
         }
     </script>
 </head>
@@ -35,3 +39,4 @@
     <div id="result"></div>
 </body>
 </html>
+

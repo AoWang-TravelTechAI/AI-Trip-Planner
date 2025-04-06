@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import googlemaps
 import os
 from flask import Flask, request, jsonify, render_template
@@ -6,9 +6,14 @@ from dotenv import load_dotenv
 
 # Load API keys from .env file
 load_dotenv()
-print("OpenAI Key:", os.getenv("OPENAI_API_KEY"))
-openai.api_key = os.getenv("OPENAI_API_KEY")
-gmaps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_API_KEY"))
+openai_api_key = os.getenv("OPENAI_API_KEY")
+google_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+
+print("OpenAI Key:", openai_api_key)
+
+# Initialize clients
+client = OpenAI(api_key=openai_api_key)
+gmaps = googlemaps.Client(key=google_api_key)
 
 app = Flask(__name__)
 
@@ -16,22 +21,26 @@ def generate_itinerary(destination, days):
     prompt = f"Please create a {days}-day itinerary for {destination}, including sightseeing, food, and activity suggestions for each day."
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a professional travel planner."},
                 {"role": "user", "content": prompt}
             ]
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content
     except Exception as e:
         print("Error in generate_itinerary:", e)
         return "Error generating itinerary."
 
 def get_real_time_attractions(destination):
-    result = gmaps.places(query=f"top attractions in {destination}")
-    attractions = [place["name"] for place in result.get("results", [])[:5]]
-    return attractions
+    try:
+        result = gmaps.places(query=f"top attractions in {destination}")
+        attractions = [place["name"] for place in result.get("results", [])[:5]]
+        return attractions
+    except Exception as e:
+        print("Error in get_real_time_attractions:", e)
+        return ["Attraction data unavailable"]
 
 @app.route("/")
 def home():
@@ -59,4 +68,5 @@ if __name__ == "__main__":
     print(app.url_map)
 
     app.run(debug=True)
+
 

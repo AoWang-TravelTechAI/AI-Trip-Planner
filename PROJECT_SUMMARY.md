@@ -45,6 +45,9 @@ This project strengthens my resume and job prospects by showing:
 python app.py
 # Then visit:
 http://127.0.0.1:5000
+```
+---
+
 ## 🔮 Future Enhancements
 - Add user login and trip-saving features
 - Deploy to the cloud (e.g., Render, Vercel)
